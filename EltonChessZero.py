@@ -4,7 +4,7 @@ import random
 piece_value = { "K": 0, "Q": 10, "R": 5, "B": 3, "N": 3, "p": 1 }
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 2
+DEPTH = 3
 #positional advantage
 # - pin to the king or a piece is good
 
@@ -15,12 +15,12 @@ def findRandomMove(valid_moves):
     print("Valid moves",  [move.getChessNotation() for move in valid_moves])
     return valid_moves[random.randint(0, len(valid_moves) - 1)]
 
-
+"""
 def findBestMove(gs, valid_moves):
-    """
-    Find the best move using the minimax algorithm.
     
-    """
+    #Find the best move using the minimax algorithm.
+    
+    
     turn_multiplier = 1 if gs.white_to_move else -1
     opponent_min_max_score = CHECKMATE
     best_player_move = None
@@ -51,16 +51,19 @@ def findBestMove(gs, valid_moves):
         gs.undoMove()
     
     return best_player_move
-        
+    """
 
-def findBestMoveMinMax(gs, valid_moves):
+def findBestMove(gs, valid_moves):
     """
     Find the best move using the minimax algorithm.
     
     """
-    global next_move
+    global next_move,counter
     next_move = None
-    findMoveMinMax(gs, valid_moves, DEPTH, gs.white_to_move)
+    random.shuffle(valid_moves)
+    counter = 0
+    findMoveNegaMaxAlphaBeta(gs, valid_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.white_to_move else -1)
+    print(counter)
     return next_move
 
 def findMoveMinMax(gs, valid_moves, depth, white_to_move):
@@ -94,7 +97,74 @@ def findMoveMinMax(gs, valid_moves, depth, white_to_move):
             return min_score
     
 
-def scoreBoard(gs, valid_moves, depth, white_to_move):
+def findMoveNegaMax(gs, valid_moves, depth, turn):
+    global next_move
+    if depth == 0:
+        #print(scoreBoard(gs))
+        return turn * scoreBoard(gs)
+    
+    max_score = -CHECKMATE
+    for move in valid_moves:
+        gs.makeMove(move)
+        next_moves = gs.getValidMoves()
+        score = -findMoveNegaMax(gs, next_moves, depth - 1, -turn)
+        if score > max_score:
+            max_score = score
+            if depth == DEPTH:
+                next_move = move
+        gs.undoMove()
+    return max_score
+
+
+def findMoveNegaMaxAlphaBeta(gs, valid_moves, depth,alpha,beta, turn):
+    global next_move,counter
+    counter += 1
+    if depth == 0:
+        #print(scoreBoard(gs))
+        return turn * scoreBoard(gs)
+    
+    #move ordering - implement later
+    max_score = -CHECKMATE
+    for move in valid_moves:
+        gs.makeMove(move)
+        next_moves = gs.getValidMoves()
+        score = -findMoveNegaMaxAlphaBeta(gs, next_moves, depth - 1, -beta, -alpha, -turn)
+        if score > max_score:
+            max_score = score
+            if depth == DEPTH:
+                next_move = move
+        gs.undoMove()
+        if max_score > alpha: #prunning
+            alpha = max_score
+        if alpha >= beta:
+            break
+    return max_score
+
+def evaluateBoard(gs):
+    """
+    Evaluate the board and return a score.
+    """
+    if gs.checkmate:
+        if gs.white_to_move:
+            return -CHECKMATE  # black wins
+        else:
+            return CHECKMATE  # white wins
+    elif gs.stalemate:
+        return STALEMATE
+
+    score = 0
+    for row in gs.board:
+        for square in row:
+            if square != "--":
+                if square[0] == 'w':
+                    score += piece_value[square[1]] 
+                elif square[0] == 'b':
+                    score -= piece_value[square[1]] 
+    return score
+
+
+
+def scoreBoard(gs):
     if gs.checkmate:
         if gs.white_to_move:
             return -CHECKMATE
@@ -103,18 +173,12 @@ def scoreBoard(gs, valid_moves, depth, white_to_move):
     elif gs.stalemate:
         return STALEMATE
     
-    return evaluateBoard(gs.board)
-    
-    
-def evaluateBoard(board):
-    """
-    Evaluate the board and return a score.
-    """
     score = 0
-    for row in board:
+    for row in gs.board:
         for square in row:
             if square[0] == 'w':
                 score += piece_value[square[1]]
             elif square[0] == 'b':
                 score -= piece_value[square[1]]
     return score
+    

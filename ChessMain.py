@@ -25,6 +25,7 @@ def main():
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
+    moveLogFont = p.font.SysFont("Arial", 14, False, False)
     game_state = ChessEngine.GameState()
     valid_moves = game_state.getValidMoves()
     move_made = False
@@ -39,7 +40,7 @@ def main():
     #ai_thinking = False
     #move_undone = False
     playerOne = True  # if a human is playing white, then this will be True, if an AI is playing then this will be False
-    playerTwo = False  # if a human is playing black, then this will be True, if an AI is playing then this will be False
+    playerTwo = True  # if a human is playing black, then this will be True, if an AI is playing then this will be False
     
     while running:
         human_turn = (game_state.white_to_move and playerOne) or (not game_state.white_to_move and playerTwo)
@@ -100,7 +101,7 @@ def main():
         
         #AI move finder logic
         if not game_over and not human_turn:
-            AIMove = EltonChessZero.findBestMoveMinMax(game_state, valid_moves)
+            AIMove = EltonChessZero.findBestMove(game_state, valid_moves)
             if AIMove is None:
                 AIMove = EltonChessZero.findRandomMove(valid_moves)
             game_state.makeMove(AIMove)
@@ -113,8 +114,11 @@ def main():
                 animateMove(game_state.move_log[-1], screen, game_state.board, clock)
             valid_moves = game_state.getValidMoves()
             move_made = False
-               
-        drawGameState(screen,game_state ,valid_moves, square_selected)
+        
+        drawGameState(screen, game_state, valid_moves, square_selected)
+        
+        if not game_over:       
+            drawMoveLog(screen, game_state, moveLogFont)
         
         if game_state.checkmate or game_state.stalemate:
             game_over = True
@@ -181,6 +185,44 @@ def drawPieces(screen,board):
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(column * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
+def drawMoveLog(screen, game_state, font):
+    """
+    Draws the move log.
+
+    """
+    move_log_rect = p.Rect(BOARD_WIDTH, 0, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
+    p.draw.rect(screen, p.Color('black'), move_log_rect)
+    move_log = game_state.move_log
+    move_texts = []
+    for i in range(0, len(move_log), 2):
+        move_string = str(i // 2 + 1) + '. ' + str(move_log[i]) + " "
+        if i + 1 < len(move_log):
+            move_string += str(move_log[i + 1]) + "  "
+        move_texts.append(move_string)
+
+    moves_per_row = 3
+    padding = 5
+    line_spacing = 2
+    text_y = padding
+    for i in range(0, len(move_texts), moves_per_row):
+        text = ""
+        for j in range(moves_per_row):
+            if i + j < len(move_texts):
+                text += move_texts[i + j]
+
+        text_object = font.render(text, True, p.Color('white'))
+        text_location = move_log_rect.move(padding, text_y)
+        screen.blit(text_object, text_location)
+        text_y += text_object.get_height() + line_spacing
+
+def drawEndGameText(screen, text):
+    font = p.font.SysFont("Helvetica", 32, True, False)
+    text_object = font.render(text, False, p.Color("gray"))
+    text_location = p.Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT).move(BOARD_WIDTH / 2 - text_object.get_width() / 2,
+                                                                 BOARD_HEIGHT / 2 - text_object.get_height() / 2)
+    screen.blit(text_object, text_location)
+    text_object = font.render(text, False, p.Color('black'))
+    screen.blit(text_object, text_location.move(2, 2))
 
 def animateMove(move, screen, board, clock):
     """
@@ -201,6 +243,9 @@ def animateMove(move, screen, board, clock):
         p.draw.rect(screen, color, end_square)
         # draw the captured piece back onto the board
         if move.piece_captured != '--':
+            if move.is_enpassant_move:
+                is_enpassant_move_row = move.end_row + 1 if move.piece_captured[0] == 'b' else move.end_row - 1
+                end_square = p.Rect(move.end_col * SQUARE_SIZE, is_enpassant_move_row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
             screen.blit(IMAGES[move.piece_captured], end_square)
         # draw the moving piece
         if move.piece_moved != '--':  # Add this check to skip empty squares

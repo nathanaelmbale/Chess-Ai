@@ -592,6 +592,7 @@ class Move:
 
         self.is_capture = self.piece_captured != "--"
         self.moveID = self.start_row * 1000 + self.start_col * 100 + self.end_row * 10 + self.end_col
+        
 
     def __eq__(self, other):
         """
