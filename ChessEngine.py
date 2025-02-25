@@ -38,7 +38,7 @@ class GameState:
         self.current_castling_rights = CastleRights(True, True, True, True)
         self.castle_rights_log = [CastleRights(self.current_castling_rights.wks, self.current_castling_rights.bks,
                                                self.current_castling_rights.wqs, self.current_castling_rights.bqs)]
-
+    
     def makeMove(self, move):
         """
         Takes a Move as a parameter and executes it.
@@ -90,6 +90,20 @@ class GameState:
         self.castle_rights_log.append(CastleRights(self.current_castling_rights.wks, self.current_castling_rights.bks,
                                                    self.current_castling_rights.wqs, self.current_castling_rights.bqs))
 
+    def getPGN(self):
+        """
+        Generate the PGN string from the move log.
+        """
+        pgn = ""
+        move_number = 1
+        for i, move in enumerate(self.move_log):
+            if i % 2 == 0:
+                pgn += f"{move_number}. "
+                move_number += 1
+            pgn += move.getChessNotation() + " "
+        return pgn.strip()
+
+    
     def undoMove(self):
         """
         Undo the last move

@@ -40,7 +40,7 @@ def main():
     #ai_thinking = False
     #move_undone = False
     playerOne = True  # if a human is playing white, then this will be True, if an AI is playing then this will be False
-    playerTwo = True  # if a human is playing black, then this will be True, if an AI is playing then this will be False
+    playerTwo = False  # if a human is playing black, then this will be True, if an AI is playing then this will be False
     
     while running:
         human_turn = (game_state.white_to_move and playerOne) or (not game_state.white_to_move and playerTwo)
@@ -122,6 +122,7 @@ def main():
         
         if game_state.checkmate or game_state.stalemate:
             game_over = True
+            savePGNToFile(game_state, "game.pgn")
             font = p.font.SysFont(None, 32)
             if game_state.stalemate:
                 text = 'Stalemate'
@@ -167,6 +168,13 @@ def highlightSquares(screen, game_state, valid_moves, square_selected):
                 if move.start_row == row and move.start_col == col:
                     screen.blit(s, (move.end_col * SQUARE_SIZE, move.end_row * SQUARE_SIZE))
 
+def savePGNToFile(gs, filename):
+    """
+    Save the PGN string to a file.
+    """
+    pgn = gs.getPGN()
+    with open(filename, 'w') as file:
+        file.write(pgn)
 
 def drawBoard(screen):
     global colors
