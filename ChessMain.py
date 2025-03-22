@@ -183,8 +183,7 @@ def drawBoard(screen):
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[(r+c) % 2]
-            p.draw.rect(screen,color,p.Rect(c*SQUARE_SIZE , r*SQUARE_SIZE ,SQUARE_SIZE , SQUARE_SIZE))
-            
+            p.draw.rect(screen,color,p.Rect(c*SQUARE_SIZE , r*SQUARE_SIZE ,SQUARE_SIZE , SQUARE_SIZE))           
             
 def drawPieces(screen,board):
     for row in range(DIMENSION):
